@@ -3,12 +3,19 @@
 
   <div class="messages">
     <div *ngFor="let msg of chat" [ngClass]="msg.role">
-      <b>{{ msg.role === 'user' ? 'You' : 'AI' }}:</b> {{ msg.content }}
+      <b>{{ msg.role === 'user' ? 'You' : (msg.role === 'assistant' ? 'AI' : 'System') }}:</b> {{ msg.content }}
     </div>
   </div>
 
   <div class="input-area">
     <input type="text" [(ngModel)]="input" placeholder="Type your answer..." (keyup.enter)="sendAnswer()" />
-    <button (click)="sendAnswer()" >Send</button>
+    <button (click)="sendAnswer()">Send</button>
+    <button (click)="startListening()">🎤 Speak</button>
+  </div>
+
+  <div class="speech-popup" *ngIf="isListening">
+    <p><strong>🎙️ Listening...</strong></p>
+    <p>{{ liveTranscript || 'Say something...' }}</p>
+    <button (click)="stopListening()">Stop</button>
   </div>
 </div>

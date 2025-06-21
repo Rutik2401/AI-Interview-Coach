@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user/user.service';
@@ -14,18 +14,64 @@ import { AiService } from '../../services/ai/ai.service';
 export class InterviewComponent implements OnInit {
   chat: { role: string; content: string }[] = [];
   input = '';
-  loading = false;
   userName = '';
   userRole = '';
   askedQuestions = new Set<string>();
+  recognition: any;
+  isListening = false;
+  liveTranscript = '';
 
-  constructor(private userService: UserService, private aiService: AiService) {}
+  constructor(
+    private userService: UserService,
+    private aiService: AiService,
+    private ngZone: NgZone // ✅ Inject NgZone
+  ) {
+    const SpeechRecognition =
+      (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+
+    if (SpeechRecognition) {
+      this.recognition = new SpeechRecognition();
+      this.recognition.lang = 'en-US';
+      this.recognition.continuous = true;
+      this.recognition.interimResults = true;
+
+      this.recognition.onresult = (event: any) => {
+        let interim = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            this.ngZone.run(() => {
+              this.liveTranscript = transcript;
+              this.input = transcript;
+              this.sendAnswer(); // ✅ Update inside NgZone
+              this.stopListening();
+            });
+          } else {
+            interim += transcript;
+          }
+        }
+        this.ngZone.run(() => {
+          this.liveTranscript = interim;
+        });
+      };
+
+      this.recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        this.stopListening();
+      };
+
+      this.recognition.onend = () => {
+        this.stopListening();
+      };
+    } else {
+      alert('Speech recognition not supported in your browser');
+    }
+  }
 
   ngOnInit() {
     const user = this.userService.getUser();
     this.userName = user.name;
     this.userRole = user.role;
-
     this.startInterview();
   }
 
@@ -34,7 +80,7 @@ export class InterviewComponent implements OnInit {
       You are an expert interviewer. Conduct a mock interview for a ${this.userRole} named ${this.userName}.
       Ask one question at a time. Do not repeat previous questions.
       Wait for user's answer before asking the next.
-      Be natural and human-like. Use friendly but professional tone.
+      Be natural and human-like. Use a friendly but professional tone.
     `;
     this.chat = [
       { role: 'system', content: systemPrompt },
@@ -44,17 +90,14 @@ export class InterviewComponent implements OnInit {
   }
 
   askNextQuestion() {
-    this.loading = true;
     this.aiService.askAI(this.chat).subscribe((res: any) => {
       const reply = res.choices[0].message.content.trim();
-
-      // Optional: skip repeated questions
       if (!this.askedQuestions.has(reply)) {
-        this.chat.push({ role: 'assistant', content: reply });
-        this.askedQuestions.add(reply);
+        this.ngZone.run(() => {
+          this.chat.push({ role: 'assistant', content: reply });
+          this.askedQuestions.add(reply);
+        });
       }
-
-      this.loading = false;
     });
   }
 
@@ -64,6 +107,22 @@ export class InterviewComponent implements OnInit {
 
     this.chat.push({ role: 'user', content: answer });
     this.input = '';
-    this.askNextQuestion(); // Get next question after user answers
+    this.liveTranscript = '';
+    this.askNextQuestion();
+  }
+
+  startListening() {
+    if (this.recognition) {
+      this.liveTranscript = '';
+      this.isListening = true;
+      this.recognition.start();
+    }
+  }
+
+  stopListening() {
+    if (this.recognition) {
+      this.recognition.stop();
+    }
+    this.isListening = false;
   }
 }
