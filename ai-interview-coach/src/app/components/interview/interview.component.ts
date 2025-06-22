@@ -91,8 +91,8 @@ export class InterviewComponent implements OnInit {
 
   askNextQuestion() {
     this.aiService.askAI(this.chat).subscribe((res: any) => {
-      const reply = res.choices[0].message.content.trim();
-      if (!this.askedQuestions.has(reply)) {
+      const reply = res;
+      if (reply && !this.askedQuestions.has(reply)) {
         this.ngZone.run(() => {
           this.chat.push({ role: 'assistant', content: reply });
           this.askedQuestions.add(reply);

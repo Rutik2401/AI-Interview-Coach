@@ -1,29 +1,23 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { from, Observable } from 'rxjs';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AiService {
-  private apiKey = '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'; 
-  private apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
+  private apiKey = 'AIzaSyC3WLo0Tqg_fa6TKjKQL_RGf2w3aVnPXcs'; 
+  private genAI: GoogleGenerativeAI;
 
-  constructor(private http: HttpClient) {}
+  constructor() {
+    this.genAI = new GoogleGenerativeAI(this.apiKey);
+  }
 
   askAI(messages: { role: string; content: string }[]): Observable<any> {
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.apiKey}`,
-      'HTTP-Referer': 'http://localhost:4200' 
-    });
-
-    const body = {
-      model: 'openai/gpt-3.5-turbo',
-      messages: messages,
-      temperature: 0.7
-    };
-
-    return this.http.post(this.apiUrl, body, { headers });
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const formattedMessages = messages.map(msg => msg.content).join('\n');
+    return from(
+      model.generateContent(formattedMessages).then((res: { response: { text: () => any; }; }) => res.response.text())
+    );
   }
 }
