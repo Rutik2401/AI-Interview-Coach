@@ -15,7 +15,7 @@ export class UserFormComponent {
   name = '';
   role = '';
 
-  constructor(private userService: UserService, private router: Router) {}
+  constructor(private userService: UserService, private router: Router) { }
 
   startInterview() {
     if (this.name && this.role) {

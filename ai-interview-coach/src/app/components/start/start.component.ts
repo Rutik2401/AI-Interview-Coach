@@ -8,10 +8,10 @@ import { Router } from '@angular/router';
   styleUrl: './start.component.scss'
 })
 export class StartComponent {
-  constructor(private router:Router){
+  constructor(private router: Router) {
 
   }
-goToForm(){
-   this.router.navigate(['/form']);
-}
+  goToForm() {
+    this.router.navigate(['/form']);
+  }
 }

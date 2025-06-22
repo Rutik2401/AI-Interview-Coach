@@ -24,7 +24,7 @@ export class InterviewComponent implements OnInit {
   constructor(
     private userService: UserService,
     private aiService: AiService,
-    private ngZone: NgZone // ✅ Inject NgZone
+    private ngZone: NgZone
   ) {
     const SpeechRecognition =
       (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
@@ -43,7 +43,7 @@ export class InterviewComponent implements OnInit {
             this.ngZone.run(() => {
               this.liveTranscript = transcript;
               this.input = transcript;
-              this.sendAnswer(); // ✅ Update inside NgZone
+              this.sendAnswer();
               this.stopListening();
             });
           } else {
