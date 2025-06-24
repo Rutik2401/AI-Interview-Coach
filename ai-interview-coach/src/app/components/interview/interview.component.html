@@ -1,6 +1,11 @@
 <div class="wrapper">
   <h2>Hello {{ userName }}, Let’s begin your {{ userRole }} interview!</h2>
 
+  <!-- 👇 Camera Preview Box -->
+  <div class="camera-box">
+    <video #video autoplay muted playsinline></video>
+  </div>
+
   <div class="messages">
     <div *ngFor="let msg of chat" [ngClass]="msg.role">
       <b>{{ msg.role === 'user' ? 'You' : (msg.role === 'assistant' ? 'AI' : 'System') }}:</b> {{ msg.content }}
@@ -19,3 +24,4 @@
     <button (click)="stopListening()">Stop</button>
   </div>
 </div>
+<app-footer></app-footer>

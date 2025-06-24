@@ -1,17 +1,19 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user/user.service';
 import { AiService } from '../../services/ai/ai.service';
+import { FooterComponent } from '../footer/footer.component';
 
 @Component({
   selector: 'app-interview',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule,FooterComponent],
   templateUrl: './interview.component.html',
   styleUrls: ['./interview.component.scss']
 })
 export class InterviewComponent implements OnInit {
+  @ViewChild('video', { static: true }) videoElement!: ElementRef<HTMLVideoElement>;
   chat: { role: string; content: string }[] = [];
   input = '';
   userName = '';
@@ -21,11 +23,7 @@ export class InterviewComponent implements OnInit {
   isListening = false;
   liveTranscript = '';
 
-  constructor(
-    private userService: UserService,
-    private aiService: AiService,
-    private ngZone: NgZone
-  ) {
+  constructor(  private userService: UserService, private aiService: AiService, private ngZone: NgZone ) {
     const SpeechRecognition =
       (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
 
@@ -34,6 +32,7 @@ export class InterviewComponent implements OnInit {
       this.recognition.lang = 'en-US';
       this.recognition.continuous = true;
       this.recognition.interimResults = true;
+      this.recognition.maxAlternatives = 3;
 
       this.recognition.onresult = (event: any) => {
         let interim = '';
@@ -60,6 +59,7 @@ export class InterviewComponent implements OnInit {
         this.stopListening();
       };
 
+
       this.recognition.onend = () => {
         this.stopListening();
       };
@@ -72,8 +72,27 @@ export class InterviewComponent implements OnInit {
     const user = this.userService.getUser();
     this.userName = user.name;
     this.userRole = user.role;
+
+    this.startCamera(); // 👈 Start camera here
     this.startInterview();
   }
+
+  startCamera() {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then((stream) => {
+          if (this.videoElement && this.videoElement.nativeElement) {
+            this.videoElement.nativeElement.srcObject = stream;
+          }
+        })
+        .catch((err) => {
+          console.error('Error accessing camera:', err);
+        });
+    } else {
+      alert('Camera not supported in this browser.');
+    }
+  }
+
 
   startInterview() {
     const systemPrompt = `

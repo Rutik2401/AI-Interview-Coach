@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { UserService } from '../../services/user/user.service';
+import { FooterComponent } from '../footer/footer.component';
 
 @Component({
   selector: 'app-user-form',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule,FooterComponent],
   templateUrl: './user-form.component.html',
   styleUrls: ['./user-form.component.scss']
 })
