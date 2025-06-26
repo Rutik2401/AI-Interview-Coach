@@ -9,7 +9,9 @@
   height: 100%;
   width: 100vw;
   overflow: hidden; // removes both x and y scrollbars
-
+  p{
+    padding: 1rem 0rem;
+  }
   button {
     padding: 10px 20px;
     background-color: #4f46e5;
