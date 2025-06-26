@@ -16,8 +16,8 @@ export class InterviewComponent implements OnInit {
   @ViewChild('video', { static: true }) videoElement!: ElementRef<HTMLVideoElement>;
   chat: { role: string; content: string }[] = [];
   input = '';
-  userName = '';
-  userRole = '';
+  userName :any= '';
+  userRole :any= '';
   askedQuestions = new Set<string>();
   recognition: any;
   isListening = false;
@@ -72,6 +72,8 @@ export class InterviewComponent implements OnInit {
     const user = this.userService.getUser();
     this.userName = user.name;
     this.userRole = user.role;
+    this.userName = sessionStorage.getItem('name');
+    this.userRole = sessionStorage.getItem('role')
 
     this.startCamera(); // 👈 Start camera here
     this.startInterview();

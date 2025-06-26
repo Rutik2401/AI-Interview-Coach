@@ -20,6 +20,8 @@ export class UserFormComponent {
 
   startInterview() {
     if (this.name && this.role) {
+      sessionStorage.setItem('name',this.name);
+      sessionStorage.setItem('role',this.role);
       this.userService.setUser(this.name, this.role);
       this.router.navigate(['/interview']);
     } else {
