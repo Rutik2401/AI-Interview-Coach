@@ -1,14 +1,13 @@
 import { Component, ElementRef, OnInit, ViewChild, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { UserService } from '../../services/user/user.service';
 import { AiService } from '../../services/ai/ai.service';
 import { FooterComponent } from '../footer/footer.component';
 
 @Component({
   selector: 'app-interview',
   standalone: true,
-  imports: [CommonModule, FormsModule,FooterComponent],
+  imports: [CommonModule, FormsModule, FooterComponent],
   templateUrl: './interview.component.html',
   styleUrls: ['./interview.component.scss']
 })
@@ -16,66 +15,63 @@ export class InterviewComponent implements OnInit {
   @ViewChild('video', { static: true }) videoElement!: ElementRef<HTMLVideoElement>;
   chat: { role: string; content: string }[] = [];
   input = '';
-  userName :any= '';
-  userRole :any= '';
+  userName: string = '';
+  userRole: string = '';
+  experience: string = '';
   askedQuestions = new Set<string>();
   recognition: any;
   isListening = false;
   liveTranscript = '';
+  finalTranscript = '';
+  sendTimer: any = null;
 
-  constructor(  private userService: UserService, private aiService: AiService, private ngZone: NgZone ) {
-    const SpeechRecognition =
-      (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+  constructor(private aiService: AiService, private ngZone: NgZone) {
+  const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
 
-    if (SpeechRecognition) {
-      this.recognition = new SpeechRecognition();
-      this.recognition.lang = 'en-US';
-      this.recognition.continuous = true;
-      this.recognition.interimResults = true;
-      this.recognition.maxAlternatives = 3;
+  if (SpeechRecognition) {
+    this.recognition = new SpeechRecognition();
+    this.recognition.lang = 'en-US';
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
+    this.recognition.maxAlternatives = 3;
 
-      this.recognition.onresult = (event: any) => {
-        let interim = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            this.ngZone.run(() => {
-              this.liveTranscript = transcript;
-              this.input = transcript;
-              this.sendAnswer();
-              this.stopListening();
-            });
-          } else {
-            interim += transcript;
-          }
+    this.recognition.onresult = (event: any) => {
+      let interim = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+
+        if (event.results[i].isFinal) {
+          this.finalTranscript += transcript + ' ';
+        } else {
+          interim += transcript;
         }
-        this.ngZone.run(() => {
-          this.liveTranscript = interim;
-        });
-      };
+      }
 
-      this.recognition.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        this.stopListening();
-      };
+      this.ngZone.run(() => {
+        this.liveTranscript = interim;
+      });
+    };
 
+    this.recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      this.stopListening();
+    };
 
-      this.recognition.onend = () => {
-        this.stopListening();
-      };
-    } else {
-      alert('Speech recognition not supported in your browser');
-    }
+    this.recognition.onend = () => {
+      this.stopListening();
+    };
+  } else {
+    alert('Speech recognition not supported in your browser');
   }
+}
+
 
   ngOnInit() {
-    const user = this.userService.getUser();
-    this.userName = user.name;
-    this.userRole = user.role;
-    this.userName = sessionStorage.getItem('name');
-    this.userRole = sessionStorage.getItem('role')
-
-    this.startCamera(); // 👈 Start camera here
+    this.userName = sessionStorage.getItem('name') || '';
+    this.userRole = sessionStorage.getItem('role') || '';
+    this.experience = sessionStorage.getItem('experience') || '';
+    this.startCamera();
     this.startInterview();
   }
 
@@ -83,7 +79,7 @@ export class InterviewComponent implements OnInit {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices.getUserMedia({ video: true })
         .then((stream) => {
-          if (this.videoElement && this.videoElement.nativeElement) {
+          if (this.videoElement?.nativeElement) {
             this.videoElement.nativeElement.srcObject = stream;
           }
         })
@@ -95,18 +91,27 @@ export class InterviewComponent implements OnInit {
     }
   }
 
-
   startInterview() {
     const systemPrompt = `
-      You are an expert interviewer. Conduct a mock interview for a ${this.userRole} named ${this.userName}.
-      Ask one question at a time. Do not repeat previous questions.
-      Wait for user's answer before asking the next.
-      Be natural and human-like. Use a friendly but professional tone.
+      You are an expert technical interviewer.
+
+      Conduct a mock interview for a ${this.userRole} named ${this.userName}, who has ${this.experience} of experience.
+
+      Guidelines:
+      - Start with an introduction: "Please introduce yourself."
+      - Ask one question at a time.
+      - Do NOT repeat previous questions.
+      - Gradually increase the difficulty of questions after a few rounds, based on the candidate's experience.
+      - Keep the tone professional yet friendly.
+      - Wait for the user's answer before moving to the next question.
+      - Tailor questions to the experience level: ${this.experience}.
     `;
+
     this.chat = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: `Let's begin the mock interview.` }
     ];
+
     this.askNextQuestion();
   }
 
@@ -135,15 +140,24 @@ export class InterviewComponent implements OnInit {
   startListening() {
     if (this.recognition) {
       this.liveTranscript = '';
+      this.finalTranscript = '';
       this.isListening = true;
       this.recognition.start();
     }
   }
 
-  stopListening() {
-    if (this.recognition) {
-      this.recognition.stop();
-    }
-    this.isListening = false;
+ stopListening() {
+  if (this.recognition) {
+    this.recognition.stop();
   }
+  this.isListening = false;
+
+  if (this.finalTranscript.trim()) {
+    this.input = this.finalTranscript.trim();
+    this.liveTranscript = '';
+    this.sendAnswer();
+    this.finalTranscript = '';
+  }
+}
+
 }

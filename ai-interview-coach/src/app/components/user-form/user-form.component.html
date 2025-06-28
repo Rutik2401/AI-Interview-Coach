@@ -3,6 +3,7 @@
   <h2>Enter Your Details</h2>
   <input type="text" placeholder="Your Name" [(ngModel)]="name" />
   <input type="text" placeholder="Role (e.g. Frontend Developer)" [(ngModel)]="role" />
+  <input type="number" placeholder="1 Year" min="0" [(ngModel)]="experience" />
   <button (click)="startInterview()">Start</button>
   
 </div>
