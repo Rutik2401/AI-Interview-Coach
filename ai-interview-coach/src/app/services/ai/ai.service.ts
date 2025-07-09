@@ -6,7 +6,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
   providedIn: 'root'
 })
 export class AiService {
-  private apiKey = 'AIzaSyC3WLo0Tqg_fa6TKjKQL_RGf2w3aVnPXcs'; 
+  private apiKey = 'AIzaSyBfoGJt3qg0OKf5xc4DaozLSJx8N-Cljgw'; 
   private genAI: GoogleGenerativeAI;
 
   constructor() {
@@ -21,3 +21,4 @@ export class AiService {
     );
   }
 }
+

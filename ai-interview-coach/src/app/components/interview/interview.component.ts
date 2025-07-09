@@ -26,45 +26,45 @@ export class InterviewComponent implements OnInit {
   sendTimer: any = null;
 
   constructor(private aiService: AiService, private ngZone: NgZone) {
-  const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
 
-  if (SpeechRecognition) {
-    this.recognition = new SpeechRecognition();
-    this.recognition.lang = 'en-US';
-    this.recognition.continuous = true;
-    this.recognition.interimResults = true;
-    this.recognition.maxAlternatives = 3;
+    if (SpeechRecognition) {
+      this.recognition = new SpeechRecognition();
+      this.recognition.lang = 'en-US';
+      this.recognition.continuous = true;
+      this.recognition.interimResults = true;
+      this.recognition.maxAlternatives = 3;
 
-    this.recognition.onresult = (event: any) => {
-      let interim = '';
+      this.recognition.onresult = (event: any) => {
+        let interim = '';
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
 
-        if (event.results[i].isFinal) {
-          this.finalTranscript += transcript + ' ';
-        } else {
-          interim += transcript;
+          if (event.results[i].isFinal) {
+            this.finalTranscript += transcript + ' ';
+          } else {
+            interim += transcript;
+          }
         }
-      }
 
-      this.ngZone.run(() => {
-        this.liveTranscript = interim;
-      });
-    };
+        this.ngZone.run(() => {
+          this.liveTranscript = interim;
+        });
+      };
 
-    this.recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
-      this.stopListening();
-    };
+      this.recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        this.stopListening();
+      };
 
-    this.recognition.onend = () => {
-      this.stopListening();
-    };
-  } else {
-    alert('Speech recognition not supported in your browser');
+      this.recognition.onend = () => {
+        this.stopListening();
+      };
+    } else {
+      alert('Speech recognition not supported in your browser');
+    }
   }
-}
 
 
   ngOnInit() {
@@ -93,19 +93,19 @@ export class InterviewComponent implements OnInit {
 
   startInterview() {
     const systemPrompt = `
-      You are an expert technical interviewer.
+    You are an expert technical interviewer.
 
-      Conduct a mock interview for a ${this.userRole} named ${this.userName}, who has ${this.experience} of experience.
+    Conduct a mock interview for a ${this.userRole} named ${this.userName}, who has ${this.experience} of experience.
 
-      Guidelines:
-      - Start with an introduction: "Please introduce yourself."
-      - Ask one question at a time.
-      - Do NOT repeat previous questions.
-      - Gradually increase the difficulty of questions after a few rounds, based on the candidate's experience.
-      - Keep the tone professional yet friendly.
-      - Wait for the user's answer before moving to the next question.
-      - Tailor questions to the experience level: ${this.experience}.
-    `;
+    Guidelines:
+    - Start with: "Hi [Name], welcome! Please introduce yourself."
+    - Ask one question at a time, wait for a response before continuing.
+    - Do NOT repeat previous questions.
+    - Ask questions in a real-time interview *chat style*, limited to a maximum of 4 lines per message.
+    - Make important terms or concepts visually *bold*.
+    - Increase the difficulty gradually based on the candidate's experience.
+    - Keep the tone *professional yet friendly*.
+  `;
 
     this.chat = [
       { role: 'system', content: systemPrompt },
@@ -146,18 +146,18 @@ export class InterviewComponent implements OnInit {
     }
   }
 
- stopListening() {
-  if (this.recognition) {
-    this.recognition.stop();
-  }
-  this.isListening = false;
+  stopListening() {
+    if (this.recognition) {
+      this.recognition.stop();
+    }
+    this.isListening = false;
 
-  if (this.finalTranscript.trim()) {
-    this.input = this.finalTranscript.trim();
-    this.liveTranscript = '';
-    this.sendAnswer();
-    this.finalTranscript = '';
+    if (this.finalTranscript.trim()) {
+      this.input = this.finalTranscript.trim();
+      this.liveTranscript = '';
+      this.sendAnswer();
+      this.finalTranscript = '';
+    }
   }
-}
 
 }
